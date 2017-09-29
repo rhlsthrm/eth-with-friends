@@ -4,7 +4,7 @@ contract SocialIdentityLinker {
     //state variables
     address public owner;
     uint256 public totalIdentities ;
-    mapping (uint256 => SocialIdentity) facebookIdentity;
+    mapping (uint256 => SocialIdentity) public facebookIdentity;
 
     //structs
     struct SocialIdentity {
@@ -20,9 +20,9 @@ contract SocialIdentityLinker {
     //events
     event EventSetIdentity(uint256 facebookId);
 
-
     //core functions
     function SocialIdentityLinker() {
+        owner = msg.sender;
         totalIdentities = 0;
     }
 
@@ -44,6 +44,9 @@ contract SocialIdentityLinker {
         });
         //call event
         EventSetIdentity(facebookId);
+
+        totalIdentities++;
+
         //return
         return true;
     }
