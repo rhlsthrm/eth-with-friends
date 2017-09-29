@@ -17,7 +17,6 @@ contract SocialIdentityLinker {
     //constructor
     modifier checkOwner() {require(owner == msg.sender); _ ;}
 
-
     //events
     event EventSetIdentity(uint256 facebookId);
 
