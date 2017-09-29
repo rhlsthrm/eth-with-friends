@@ -6,7 +6,6 @@ contract SocialIdentityLinker {
     uint256 public totalIdentities ;
     mapping (uint256 => SocialIdentity) facebookIdentity;
 
-
     //structs
     struct SocialIdentity {
         address walletAddress;
@@ -15,13 +14,12 @@ contract SocialIdentityLinker {
         string emailAddress;
     }
 
-
     //constructor
-    modifier checkOwner() { require(owner == msg.sender); _ ;}
+    modifier checkOwner() {require(owner == msg.sender); _ ;}
 
 
     //events
-    event eventSetIdentity(uint256 facebookId);
+    event EventSetIdentity(uint256 facebookId);
 
 
     //core functions
@@ -34,22 +32,22 @@ contract SocialIdentityLinker {
         string firstName,
         string lastName,
         string emailAddress
-    )  checkOwner() returns (bool)  
+    ) returns (bool)
     {
         // set mapping entry at facebook ID to provided data
         // this operation can create new or overwrite previous data
         facebookIdentity[facebookId] = SocialIdentity({
-            walletAddress: msg.sender, // can only set identity to a wallet you own
+            // can only set identity to a wallet you own
+            walletAddress: msg.sender,
             firstName: firstName,
             lastName: lastName,
             emailAddress: emailAddress
         });
         //call event
-        eventSetIdentity(facebookId);
+        EventSetIdentity(facebookId);
         //return
         return true;
     }
-
 
   //fallout functions
   function kill() checkOwner() {
