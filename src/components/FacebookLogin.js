@@ -85,14 +85,33 @@ class FacebookLoginComponent extends Component {
     }
   }
 
-  handleClickSetID () {
+  handleClickSetID = () => {
     const contract = require('truffle-contract')
     const socialIdentityLinker = contract(SocialIdentityLinker)
     socialIdentityLinker.setProvider(this.props.web3.currentProvider)
+    socialIdentityLinker.defaults({ from: this.props.web3.eth.accounts[0] })
     let socialIdentityLinkerInstance
 
-    socialIdentityLinker.deployed().then(instance => {
-      socialIdentityLinkerInstance = instance
+    FB.api('/me', response => {
+      console.log(response)
+      console.log(this.props.web3.eth.accounts[0])
+      socialIdentityLinker
+        .deployed()
+        .then(instance => {
+          socialIdentityLinkerInstance = instance
+          return socialIdentityLinkerInstance.setIdentity(
+            response.id,
+            '',
+            '',
+            ''
+          )
+        })
+        .then(result => {
+          console.log(`Successfully set identity! ${result}`)
+        })
+        .catch(e => {
+          console.log(e)
+        })
     })
   }
 
