@@ -11,6 +11,7 @@ import Grid from 'material-ui/Grid'
 import TextField from 'material-ui/TextField'
 import SocialIdentityLinker
   from '../../build/contracts/SocialIdentityLinker.json'
+import FacebookLogin from 'react-facebook-login'
 
 const styles = theme => ({
   card: {
@@ -49,30 +50,12 @@ const styles = theme => ({
 class FacebookLoginComponent extends Component {
   state = {
     web3detected: false,
-    accountAddress: ''
+    accountAddress: '',
+    fbId: null,
+    name: ''
   }
 
-  componentDidMount () {
-    window.fbAsyncInit = function () {
-      FB.init({
-        appId: '119959865356560',
-        autoLogAppEvents: true,
-        xfbml: true,
-        version: 'v2.10'
-      })
-      FB.AppEvents.logPageView()
-    }
-    ;(function (d, s, id) {
-      var js, fjs = d.getElementsByTagName(s)[0]
-      if (d.getElementById(id)) {
-        return
-      }
-      js = d.createElement(s)
-      js.id = id
-      js.src = '//connect.facebook.net/en_US/sdk.js'
-      fjs.parentNode.insertBefore(js, fjs)
-    })(document, 'script', 'facebook-jssdk')
-  }
+  componentDidMount () {}
 
   componentWillReceiveProps (nextProps) {
     if (this.props.web3 !== nextProps.web3 && nextProps.web3) {
@@ -115,22 +98,32 @@ class FacebookLoginComponent extends Component {
     })
   }
 
+  responseFacebook = response => {
+    console.log(response)
+    if (response.id) {
+      this.setState({ fbId: response.id, name: response.name })
+    }
+  }
+
   render () {
     const classes = this.props.classes
+    const { fbId, name } = this.state
     return (
       <div>
         <Card className={classes.card}>
           <CardContent>
             <Grid container direction='column'>
-              <div
-                className='fb-login-button'
-                data-max-rows='1'
-                data-size='large'
-                data-button-type='continue_with'
-                data-show-faces='false'
-                data-auto-logout-link='false'
-                data-use-continue-as='true'
-              />
+              {fbId
+                ? <Typography type='headline' component='h2'>
+                    Logged in as {name}
+                </Typography>
+                : <FacebookLogin
+                  appId='119959865356560'
+                  autoLoad
+                  fields='name,email,picture'
+                  scope='public_profile,user_friends'
+                  callback={this.responseFacebook}
+                  />}
               <Grid item xs={12}>
                 <Grid container direction='row'>
                   <Typography type='body1' className={classes.pos}>
