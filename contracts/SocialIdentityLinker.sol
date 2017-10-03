@@ -1,54 +1,56 @@
 pragma solidity ^0.4.2;
+import "github.com/oraclize/ethereum-api/oraclizeAPI.sol";
+import "github.com/Arachnid/solidity-stringutils/strings.sol";
 
-contract SocialIdentityLinker {
+contract SocialIdentityLinker is usingOraclize {
+    using strings for *;
     //state variables
     address public owner;
     uint256 public totalIdentities ;
-    mapping (uint256 => SocialIdentity) public facebookIdentity;
+    mapping (uint256 => address) public facebookIdentity;
 
-    //structs
-    struct SocialIdentity {
-        address walletAddress;
-        string firstName;
-        string lastName;
-        string emailAddress;
-    }
-
-    //constructor
     modifier checkOwner() {require(owner == msg.sender); _ ;}
 
     //events
     event EventSetIdentity(uint256 facebookId);
+    event newOraclizeQuery(string description);
 
-    //core functions
+    //constructor
     function SocialIdentityLinker() {
         owner = msg.sender;
         totalIdentities = 0;
     }
 
-    function setIdentity(
-        uint256 facebookId,
-        string firstName,
-        string lastName,
-        string emailAddress
-    ) returns (bool)
-    {
+    //core functions
+    function __callback(bytes32 myid, string result) {
+        if (msg.sender != oraclize_cbAddress()) throw;
+
+        uint256 facebookId = parseInt(result);
+
         // set mapping entry at facebook ID to provided data
         // this operation can create new or overwrite previous data
-        facebookIdentity[facebookId] = SocialIdentity({
-            // can only set identity to a wallet you own
-            walletAddress: msg.sender,
-            firstName: firstName,
-            lastName: lastName,
-            emailAddress: emailAddress
-        });
+        facebookIdentity[facebookId] =  msg.sender;
+
         //call event
         EventSetIdentity(facebookId);
 
         totalIdentities++;
+    }
 
-        //return
-        return true;
+    function setIdentity(
+        uint256 facebookId,
+        string facebookAccessToken
+    ) payable
+    {
+        var fbValidationURL = "json(https://graph.facebook.com/me?fields=id&access_token=".toSlice().concat(facebookAccessToken.toSlice());
+        fbValidationURL = fbValidationURL.toSlice().concat(").id".toSlice());
+
+        if (oraclize.getPrice("URL") > this.balance) {
+            newOraclizeQuery("Oraclize query was NOT sent, please add some ETH to cover for the query fee");
+        } else {
+            newOraclizeQuery("Oraclize query was sent, standing by for the answer..");
+            oraclize_query(60, "URL", fbValidationURL);
+        }
     }
 
   //fallout functions
