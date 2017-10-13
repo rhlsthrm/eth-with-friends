@@ -12,6 +12,7 @@ import TextField from 'material-ui/TextField'
 import SocialIdentityLinker
   from '../../build/contracts/SocialIdentityLinker.json'
 import FacebookLogin from 'react-facebook-login'
+import Chip from 'material-ui/Chip'
 
 const styles = theme => ({
   card: {
@@ -64,50 +65,70 @@ class FacebookLoginComponent extends Component {
           accountAddress: accounts[0],
           web3detected: true
         })
+        this.initContract(nextProps.web3)
       })
     }
   }
 
-  handleClickSetID = () => {
+  initContract = web3 => {
     const contract = require('truffle-contract')
     const socialIdentityLinker = contract(SocialIdentityLinker)
-    socialIdentityLinker.setProvider(this.props.web3.currentProvider)
-    socialIdentityLinker.defaults({ from: this.props.web3.eth.accounts[0] })
+    socialIdentityLinker.setProvider(web3.currentProvider)
+    socialIdentityLinker.defaults({ from: web3.eth.accounts[0] })
+    this.setState({
+      socialIdentityLinker
+    })
+  }
+
+  setIdentity = () => {
+    let { socialIdentityLinker, fbId, accessToken } = this.state
     let socialIdentityLinkerInstance
 
-    FB.api('/me', response => {
-      console.log(response)
-      console.log(this.props.web3.eth.accounts[0])
-      socialIdentityLinker
-        .deployed()
-        .then(instance => {
-          socialIdentityLinkerInstance = instance
-          return socialIdentityLinkerInstance.setIdentity(
-            response.id,
-            '',
-            '',
-            ''
-          )
+    socialIdentityLinker
+      .deployed()
+      .then(instance => {
+        socialIdentityLinkerInstance = instance
+        return socialIdentityLinkerInstance.setIdentity(fbId, accessToken, {
+          value: 50000000000000
         })
-        .then(result => {
-          console.log(`Successfully set identity! ${result}`)
-        })
-        .catch(e => {
-          console.log(e)
-        })
-    })
+      })
+      .then(result => {
+        console.log(`Successfully set identity! ${result}`)
+      })
+      .catch(e => {
+        console.log(e)
+      })
+  }
+
+  checkIdentity = facebookId => {
+    let { socialIdentityLinker } = this.state
+    let socialIdentityLinkerInstance
+
+    socialIdentityLinker
+      .deployed()
+      .then(instance => {
+        socialIdentityLinkerInstance = instance
+        return socialIdentityLinkerInstance.facebookIdentity(facebookId)
+      })
+      .then(mappedAddress => {
+        this.setState({ mappedAddress })
+      })
   }
 
   responseFacebook = response => {
     console.log(response)
     if (response.id) {
-      this.setState({ fbId: response.id, name: response.name })
+      this.setState({
+        fbId: response.id,
+        name: response.name,
+        accessToken: response.accessToken
+      })
     }
   }
 
   render () {
     const classes = this.props.classes
-    const { fbId, name } = this.state
+    const { fbId, name, mappedAddress } = this.state
     return (
       <div>
         <Card className={classes.card}>
@@ -148,16 +169,35 @@ class FacebookLoginComponent extends Component {
                 onChange={() => {}}
                 margin='normal'
               />
+              <Grid item xs={12}>
+                <Grid container direction='row'>
+                  {mappedAddress
+                    ? <div>
+                      <Typography type='body1' className={classes.pos}>
+                          My mapped wallet address:
+                        </Typography>
+                      <Chip label={mappedAddress} />
+                    </div>
+                    : <Typography type='body1' className={classes.pos}>
+                        No wallet address mapped.
+                      </Typography>}
+                </Grid>
+              </Grid>
             </Grid>
           </CardContent>
           <CardActions>
             <Button
-              raised
+              className={classes.button}
+              onClick={() => this.checkIdentity(fbId)}
+            >
+              Check My Facebook Identity
+            </Button>
+            <Button
               color='primary'
               className={classes.button}
-              onClick={this.handleClickSetID}
+              onClick={() => this.setIdentity()}
             >
-              Set Wallet Address
+              Set My Wallet Address
             </Button>
           </CardActions>
         </Card>
