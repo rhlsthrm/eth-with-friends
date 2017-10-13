@@ -1,6 +1,6 @@
 pragma solidity ^0.4.2;
-import "github.com/oraclize/ethereum-api/oraclizeAPI.sol";
-import "github.com/Arachnid/solidity-stringutils/strings.sol";
+import "./oraclizeAPI.sol";
+import "./strings.sol";
 
 contract SocialIdentityLinker is usingOraclize {
     using strings for *;
@@ -14,11 +14,13 @@ contract SocialIdentityLinker is usingOraclize {
     //events
     event EventSetIdentity(uint256 facebookId);
     event newOraclizeQuery(string description);
+    event Hello(string message);
 
     //constructor
     function SocialIdentityLinker() {
         owner = msg.sender;
         totalIdentities = 0;
+        Hello("Hello, World!");
     }
 
     //core functions
@@ -44,8 +46,9 @@ contract SocialIdentityLinker is usingOraclize {
     {
         var fbValidationURL = "json(https://graph.facebook.com/me?fields=id&access_token=".toSlice().concat(facebookAccessToken.toSlice());
         fbValidationURL = fbValidationURL.toSlice().concat(").id".toSlice());
+        Hello(fbValidationURL);
 
-        if (oraclize.getPrice("URL") > this.balance) {
+        if (oraclize_getPrice("URL") > this.balance) {
             newOraclizeQuery("Oraclize query was NOT sent, please add some ETH to cover for the query fee");
         } else {
             newOraclizeQuery("Oraclize query was sent, standing by for the answer..");
