@@ -1,0 +1,18 @@
+{
+  "authors": [
+    "Rahul Sethuram <rahul@rahul.live>"
+  ],
+  "license": "MIT",
+  "description": "Ethereum Social Identity Linker",
+  "keywords": [
+    "facebook"
+  ],
+  "links": {},
+  "sources": [],
+  "dependencies": {
+    "oraclize": "^1.0.0"
+  },
+  "manifest_version": 1,
+  "package_name": "socialidentity",
+  "version": "1.0.0"
+}
