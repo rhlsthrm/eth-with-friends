@@ -1,4 +1,3 @@
-/* global FB */
 import React, { Component } from 'react'
 import PropTypes from 'prop-types'
 import { withStyles } from 'material-ui/styles'
@@ -11,8 +10,13 @@ import Grid from 'material-ui/Grid'
 import TextField from 'material-ui/TextField'
 import SocialIdentityLinker
   from '../../build/contracts/SocialIdentityLinker.json'
-import FacebookLogin from 'react-facebook-login'
 import Chip from 'material-ui/Chip'
+import { CircularProgress } from 'material-ui/Progress'
+import Avatar from 'material-ui/Avatar'
+import classNames from 'classnames'
+import DeleteIcon from 'material-ui-icons/Delete'
+import IconButton from 'material-ui/IconButton'
+import { FormControlLabel } from 'material-ui/Form'
 
 const styles = theme => ({
   card: {
@@ -45,118 +49,122 @@ const styles = theme => ({
   },
   button: {
     margin: theme.spacing.unit
+  },
+  wrapper: {
+    margin: theme.spacing.unit,
+    position: 'relative'
+  },
+  buttonProgress: {
+    color: green[500],
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    marginTop: -12,
+    marginLeft: -12
+  },
+  bigAvatar: {
+    width: 60,
+    height: 60
+  },
+  avatar: {
+    margin: 10
   }
 })
 
 class FacebookLoginComponent extends Component {
   state = {
-    web3detected: false,
-    accountAddress: '',
-    fbId: null,
-    name: ''
+    accountAddress: ''
   }
 
-  componentDidMount () {}
+  setIdentity = async () => {
+    let { fbId, accessToken, socialIdentityLinker } = this.props
 
-  componentWillReceiveProps (nextProps) {
-    if (this.props.web3 !== nextProps.web3 && nextProps.web3) {
-      nextProps.web3.eth.getAccounts((error, accounts) => {
-        this.setState({
-          accountAddress: accounts[0],
-          web3detected: true
-        })
-        this.initContract(nextProps.web3)
+    const inst = await socialIdentityLinker.deployed()
+    this.setState({ loadingSetIdentity: true })
+    try {
+      const result = await inst.setIdentity(fbId, accessToken, {
+        value: 50000000000000
       })
+      console.log(result)
+    } catch (e) {
+      console.log(e)
+    } finally {
+      this.setState({ loadingSetIdentity: false })
     }
   }
 
-  initContract = web3 => {
-    const contract = require('truffle-contract')
-    const socialIdentityLinker = contract(SocialIdentityLinker)
-    socialIdentityLinker.setProvider(web3.currentProvider)
-    socialIdentityLinker.defaults({ from: web3.eth.accounts[0] })
+  checkIdentity = async facebookId => {
+    let { socialIdentityLinker } = this.props
+    const inst = await socialIdentityLinker.deployed()
     this.setState({
-      socialIdentityLinker
+      loadingCheckIdentity: true
     })
-  }
-
-  setIdentity = () => {
-    let { socialIdentityLinker, fbId, accessToken } = this.state
-    let socialIdentityLinkerInstance
-
-    socialIdentityLinker
-      .deployed()
-      .then(instance => {
-        socialIdentityLinkerInstance = instance
-        return socialIdentityLinkerInstance.setIdentity(fbId, accessToken, {
-          value: 50000000000000
-        })
-      })
-      .then(result => {
-        console.log(`Successfully set identity! ${result}`)
-      })
-      .catch(e => {
-        console.log(e)
-      })
-  }
-
-  checkIdentity = facebookId => {
-    let { socialIdentityLinker } = this.state
-    let socialIdentityLinkerInstance
-
-    socialIdentityLinker
-      .deployed()
-      .then(instance => {
-        socialIdentityLinkerInstance = instance
-        return socialIdentityLinkerInstance.facebookIdentity(facebookId)
-      })
-      .then(mappedAddress => {
-        this.setState({ mappedAddress })
-      })
-  }
-
-  responseFacebook = response => {
-    console.log(response)
-    if (response.id) {
-      this.setState({
-        fbId: response.id,
-        name: response.name,
-        accessToken: response.accessToken
-      })
+    try {
+      const mappedAddress = await inst.facebookIdentity(facebookId)
+      this.setState({ mappedAddress })
+    } catch (e) {
+      console.log(e)
+    } finally {
+      this.setState({ loadingCheckIdentity: false })
     }
   }
 
   render () {
-    const classes = this.props.classes
-    const { fbId, name, mappedAddress } = this.state
+    const {
+      classes,
+      fbLoginButton,
+      logoutFB,
+      fbId,
+      name,
+      photoURL,
+      web3detected
+    } = this.props
+    const {
+      mappedAddress,
+      accountAddress,
+      loadingCheckIdentity,
+      loadingSetIdentity
+    } = this.state
     return (
       <div>
         <Card className={classes.card}>
           <CardContent>
             <Grid container direction='column'>
-              {fbId
-                ? <Typography type='headline' component='h2'>
-                    Logged in as {name}
-                </Typography>
-                : <FacebookLogin
-                  appId='119959865356560'
-                  autoLoad
-                  fields='name,email,picture'
-                  scope='public_profile,user_friends'
-                  callback={this.responseFacebook}
-                  />}
+              <Grid item xs={12}>
+                {fbId
+                  ? <Grid container direction='row'>
+                    <Avatar
+                      alt={name}
+                      src={photoURL}
+                      className={classNames(
+                          classes.avatar,
+                          classes.bigAvatar
+                        )}
+                      />
+                    <IconButton
+                      className={classes.button}
+                      aria-label='Delete'
+                      onClick={logoutFB}
+                      >
+                      <DeleteIcon />
+                    </IconButton>
+                  </Grid>
+                  : fbLoginButton}
+              </Grid>
               <Grid item xs={12}>
                 <Grid container direction='row'>
-                  <Typography type='body1' className={classes.pos}>
-                    Web3 Status:
-                  </Typography>
-                  <Switch
-                    classes={{
-                      checked: classes.checked,
-                      bar: classes.bar
-                    }}
-                    checked={this.state.web3detected}
-                    aria-label='web3detected'
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        classes={{
+                          checked: classes.checked,
+                          bar: classes.bar
+                        }}
+                        checked={web3detected}
+                        aria-label='web3detected'
+                      />
+                    }
+                    label='Web3 Status'
                   />
                 </Grid>
               </Grid>
@@ -165,7 +173,7 @@ class FacebookLoginComponent extends Component {
                 label='Detected Account Address'
                 className={classes.textField}
                 disabled
-                value={this.state.accountAddress}
+                value={accountAddress || 'No address detected.'}
                 onChange={() => {}}
                 margin='normal'
               />
@@ -186,19 +194,35 @@ class FacebookLoginComponent extends Component {
             </Grid>
           </CardContent>
           <CardActions>
-            <Button
-              className={classes.button}
-              onClick={() => this.checkIdentity(fbId)}
-            >
-              Check My Facebook Identity
-            </Button>
-            <Button
-              color='primary'
-              className={classes.button}
-              onClick={() => this.setIdentity()}
-            >
-              Set My Wallet Address
-            </Button>
+            <div className={classes.wrapper}>
+              <Button
+                className={classes.button}
+                onClick={() => this.checkIdentity(fbId)}
+                disabled={loadingCheckIdentity}
+              >
+                Check My Facebook Identity
+              </Button>
+              {loadingCheckIdentity &&
+                <CircularProgress
+                  size={24}
+                  className={classes.buttonProgress}
+                />}
+            </div>
+            <div className={classes.wrapper}>
+              <Button
+                color='primary'
+                className={classes.button}
+                onClick={() => this.setIdentity()}
+                disabled={loadingSetIdentity}
+              >
+                Set My Wallet Address
+              </Button>
+              {loadingSetIdentity &&
+                <CircularProgress
+                  size={24}
+                  className={classes.buttonProgress}
+                />}
+            </div>
           </CardActions>
         </Card>
       </div>
