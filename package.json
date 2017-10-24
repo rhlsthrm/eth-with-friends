@@ -5,7 +5,7 @@
   "devDependencies": {
     "autoprefixer": "6.5.1",
     "babel-core": "6.17.0",
-    "babel-eslint": "7.1.1",
+    "babel-eslint": "^7.1.1",
     "babel-jest": "17.0.2",
     "babel-loader": "6.2.7",
     "babel-preset-react-app": "^2.0.1",
@@ -54,12 +54,17 @@
     "material-ui-icons": "^1.0.0-beta.10",
     "react": "^15.4.2",
     "react-dom": "^15.4.2",
-    "react-facebook-login": "^3.6.2"
+    "react-facebook-login": "^3.6.2",
+    "serve": "^6.3.1"
   },
   "scripts": {
     "start": "node scripts/start.js",
     "build": "node scripts/build.js",
-    "test": "node scripts/test.js --env=jsdom"
+    "test": "node scripts/test.js --env=jsdom",
+    "now-start": "serve --single ./build_webpack"
+  },
+  "standard": {
+    "parser": "babel-eslint"
   },
   "jest": {
     "collectCoverageFrom": [
