@@ -35,6 +35,7 @@ contract SocialIdentityLinker is usingOraclize {
         // this operation can create new or overwrite previous data
         address sender = requestMap[myid];
         facebookIdentity[facebookId] = sender;
+        delete requestMap[myid];
 
         //call event
         EventSetIdentity(facebookId, sender);
