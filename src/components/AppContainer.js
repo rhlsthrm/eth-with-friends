@@ -6,13 +6,11 @@ import FacebookLogin from 'react-facebook-login'
 import Grid from 'material-ui/Grid'
 import FacebookLoginComponent from './FacebookLogin'
 import FriendsList from './FriendsList'
-import SocialIdentityLinker
-  from '../../build/contracts/SocialIdentityLinker.json'
 
 const styles = theme => ({
   root: {
     flexGrow: 1,
-    marginTop: 30
+    marginTop: 72
   },
   paper: {
     padding: 16,
@@ -24,34 +22,7 @@ const styles = theme => ({
 class AppContainer extends Component {
   state = {
     fbId: '',
-    web3detected: false,
     myFriends: []
-  }
-
-  componentWillReceiveProps (nextProps) {
-    if (this.props.web3 !== nextProps.web3 && nextProps.web3) {
-      nextProps.web3.eth.getAccounts((error, accounts) => {
-        if (this.error) {
-          console.log(error)
-          return
-        }
-        this.setState({
-          accountAddress: accounts[0],
-          web3detected: true
-        })
-        this.initContract(nextProps.web3)
-      })
-    }
-  }
-
-  initContract = web3 => {
-    const contract = require('truffle-contract')
-    const socialIdentityLinker = contract(SocialIdentityLinker)
-    socialIdentityLinker.setProvider(web3.currentProvider)
-    socialIdentityLinker.defaults({ from: web3.eth.accounts[0] })
-    this.setState({
-      socialIdentityLinker
-    })
   }
 
   responseFacebook = async response => {
@@ -80,16 +51,14 @@ class AppContainer extends Component {
   }
 
   render () {
-    const { classes, web3 } = this.props
     const {
-      fbId,
-      name,
-      photoURL,
-      accessToken,
+      classes,
+      web3,
       socialIdentityLinker,
       web3detected,
-      myFriends
-    } = this.state
+      accountAddress
+    } = this.props
+    const { fbId, name, photoURL, accessToken, myFriends } = this.state
     return (
       <div className={classes.root}>
         <Grid container spacing={24}>
@@ -112,6 +81,7 @@ class AppContainer extends Component {
               accessToken={accessToken}
               socialIdentityLinker={socialIdentityLinker}
               web3detected={web3detected}
+              accountAddress={accountAddress}
             />
           </Grid>
           <Grid item xs={12}>
