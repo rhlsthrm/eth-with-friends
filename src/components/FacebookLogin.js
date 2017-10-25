@@ -173,7 +173,7 @@ class FacebookLoginComponent extends Component {
                   <Typography>
                     {web3detected
                       ? 'Web3 is detected!'
-                      : 'Web3 is not detected.'}
+                      : 'Web3 is not detected. Please use MetaMask or another tool to inject Web3.'}
                   </Typography>
                 </Popover>
               </Grid>
