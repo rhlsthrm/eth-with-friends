@@ -33,12 +33,6 @@ const styles = theme => ({
     marginLeft: 10,
     color: theme.palette.text.secondary
   },
-  checked: {
-    color: green[500],
-    '& + $bar': {
-      backgroundColor: green[500]
-    }
-  },
   textField: {
     marginLeft: theme.spacing.unit,
     marginRight: theme.spacing.unit
