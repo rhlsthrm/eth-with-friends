@@ -5,18 +5,17 @@ import Card, { CardActions, CardContent } from 'material-ui/Card'
 import Button from 'material-ui/Button'
 import Typography from 'material-ui/Typography'
 import green from 'material-ui/colors/green'
-import Switch from 'material-ui/Switch'
+import red from 'material-ui/colors/red'
 import Grid from 'material-ui/Grid'
 import TextField from 'material-ui/TextField'
-import SocialIdentityLinker
-  from '../../build/contracts/SocialIdentityLinker.json'
 import Chip from 'material-ui/Chip'
 import { CircularProgress } from 'material-ui/Progress'
 import Avatar from 'material-ui/Avatar'
 import classNames from 'classnames'
 import DeleteIcon from 'material-ui-icons/Delete'
 import IconButton from 'material-ui/IconButton'
-import { FormControlLabel } from 'material-ui/Form'
+import Web from 'mdi-material-ui/Web'
+import Badge from 'material-ui/Badge'
 
 const styles = theme => ({
   card: {
@@ -33,10 +32,9 @@ const styles = theme => ({
     color: theme.palette.text.secondary
   },
   pos: {
-    marginBottom: 12,
+    marginLeft: 10,
     color: theme.palette.text.secondary
   },
-  bar: {},
   checked: {
     color: green[500],
     '& + $bar': {
@@ -68,6 +66,9 @@ const styles = theme => ({
   },
   avatar: {
     margin: 10
+  },
+  badge: {
+    paddingTop: 12
   }
 })
 
@@ -117,11 +118,12 @@ class FacebookLoginComponent extends Component {
       fbId,
       name,
       photoURL,
-      web3detected
+      web3detected,
+      accountAddress
     } = this.props
+    console.log(web3detected)
     const {
       mappedAddress,
-      accountAddress,
       loadingCheckIdentity,
       loadingSetIdentity
     } = this.state
@@ -129,7 +131,7 @@ class FacebookLoginComponent extends Component {
       <div>
         <Card className={classes.card}>
           <CardContent>
-            <Grid container direction='column'>
+            <Grid container direction='column' spacing={16}>
               <Grid item xs={12}>
                 {fbId
                   ? <Grid container direction='row'>
@@ -152,21 +154,16 @@ class FacebookLoginComponent extends Component {
                   : fbLoginButton}
               </Grid>
               <Grid item xs={12}>
-                <Grid container direction='row'>
-                  <FormControlLabel
-                    control={
-                      <Switch
-                        classes={{
-                          checked: classes.checked,
-                          bar: classes.bar
-                        }}
-                        checked={web3detected}
-                        aria-label='web3detected'
-                      />
-                    }
-                    label='Web3 Status'
-                  />
-                </Grid>
+                <Badge
+                  style={{
+                    colorPrimary: red[500],
+                    colorAccent: green[500]
+                  }}
+                  badgeContent=''
+                  color={web3detected ? 'accent' : 'primary'}
+                >
+                  <Web />
+                </Badge>
               </Grid>
               <TextField
                 id='accountAddress'
@@ -184,11 +181,9 @@ class FacebookLoginComponent extends Component {
                       <Typography type='body1' className={classes.pos}>
                           My mapped wallet address:
                         </Typography>
-                      <Chip label={mappedAddress} />
+                      <Chip label={mappedAddress} className={classes.pos} />
                     </div>
-                    : <Typography type='body1' className={classes.pos}>
-                        No wallet address mapped.
-                      </Typography>}
+                    : <Typography type='body1' className={classes.pos} />}
                 </Grid>
               </Grid>
             </Grid>

@@ -29,7 +29,8 @@ const styles = theme => ({
     height: 60
   },
   title: {
-    marginLeft: 12
+    paddingLeft: 12,
+    paddingTop: 12
   }
 })
 
@@ -67,20 +68,24 @@ class FriendsList extends Component {
     return (
       <Paper className={classes.root}>
         <Typography type='headline' component='h2' className={classes.title}>
-          Friends
+          My Friends
         </Typography>
         <List>
-          {friendsWithAddress.map((friend, index) => {
-            return (
-              <ListItem button key={`friendlist-${index}`}>
-                <Avatar alt={friend.name} src={friend.picture.data.url} />
-                <ListItemText
-                  primary={friend.name}
-                  secondary={friend.address}
-                />
-              </ListItem>
-            )
-          })}
+          {friendsWithAddress.length > 0
+            ? friendsWithAddress.map((friend, index) => {
+              return (
+                <ListItem button key={`friendlist-${index}`}>
+                  <Avatar alt={friend.name} src={friend.picture.data.url} />
+                  <ListItemText
+                    primary={friend.name}
+                    secondary={friend.address}
+                    />
+                </ListItem>
+              )
+            })
+            : <ListItem>
+              <ListItemText primary='No friends found.' secondary=':(' />
+            </ListItem>}
         </List>
       </Paper>
     )
