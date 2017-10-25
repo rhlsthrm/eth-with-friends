@@ -2,15 +2,11 @@ import React, { Component } from 'react'
 import getWeb3 from './utils/getWeb3'
 import AppBar from './components/AppBar'
 import AppContainer from './components/AppContainer'
+import SocialIdentityLinker from '../build/contracts/SocialIdentityLinker.json'
 
 class App extends Component {
-  constructor (props) {
-    super(props)
-
-    this.state = {
-      storageValue: 0,
-      web3: null
-    }
+  state = {
+    web3: null
   }
 
   componentWillMount () {
@@ -20,54 +16,45 @@ class App extends Component {
     getWeb3
       .then(results => {
         this.setState({
-          web3: results.web3
+          web3: results.web3,
+          web3detected: true,
+          accountAddress: results.web3.eth.accounts[0]
         })
 
         // Instantiate contract once web3 provided.
-        this.instantiateContract()
+        this.initContract(results.web3)
       })
       .catch(() => {
         console.log('Error finding web3.')
       })
   }
 
-  instantiateContract () {
-    /*
-     * SMART CONTRACT EXAMPLE
-     *
-     * Normally these functions would be called in the context of a
-     * state management library, but for convenience I've placed them here.
-     */
-    // const contract = require('truffle-contract')
-    // const simpleStorage = contract(SimpleStorageContract)
-    // simpleStorage.setProvider(this.state.web3.currentProvider)
-    // Declaring this for later so we can chain functions on SimpleStorage.
-    // var simpleStorageInstance
-    // // Get accounts.
-    // this.state.web3.eth.getAccounts((error, accounts) => {
-    //   simpleStorage
-    //     .deployed()
-    //     .then(instance => {
-    //       simpleStorageInstance = instance
-    //       // Stores a given value, 5 by default.
-    //       return simpleStorageInstance.set(5, { from: accounts[0] })
-    //     })
-    //     .then(result => {
-    //       // Get the value from the contract to prove it worked.
-    //       return simpleStorageInstance.get.call(accounts[0])
-    //     })
-    //     .then(result => {
-    //       // Update state with the result.
-    //       return this.setState({ storageValue: result.c[0] })
-    //     })
-    // })
+  initContract = web3 => {
+    const contract = require('truffle-contract')
+    const socialIdentityLinker = contract(SocialIdentityLinker)
+    socialIdentityLinker.setProvider(web3.currentProvider)
+    socialIdentityLinker.defaults({ from: web3.eth.accounts[0] })
+    this.setState({
+      socialIdentityLinker
+    })
   }
 
   render () {
+    const {
+      socialIdentityLinker,
+      web3detected,
+      web3,
+      accountAddress
+    } = this.state
     return (
-      <div className='App'>
+      <div>
         <AppBar />
-        <AppContainer web3={this.state.web3} />
+        <AppContainer
+          web3={web3}
+          socialIdentityLinker={socialIdentityLinker}
+          web3detected={web3detected}
+          accountAddress={accountAddress}
+        />
       </div>
     )
   }
