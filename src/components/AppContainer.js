@@ -61,7 +61,7 @@ class AppContainer extends Component {
     const { fbId, name, photoURL, accessToken, myFriends } = this.state
     return (
       <div className={classes.root}>
-        <Grid container spacing={24}>
+        <Grid container spacing={8}>
           <Grid item xs={12}>
             <FacebookLoginComponent
               web3={web3}
