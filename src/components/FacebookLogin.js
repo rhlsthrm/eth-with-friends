@@ -11,11 +11,9 @@ import TextField from 'material-ui/TextField'
 import Chip from 'material-ui/Chip'
 import { CircularProgress } from 'material-ui/Progress'
 import Avatar from 'material-ui/Avatar'
-import classNames from 'classnames'
-import DeleteIcon from 'material-ui-icons/Delete'
-import IconButton from 'material-ui/IconButton'
 import Web from 'mdi-material-ui/Web'
 import Badge from 'material-ui/Badge'
+import Popover from 'material-ui/Popover'
 
 const styles = theme => ({
   card: {
@@ -34,12 +32,6 @@ const styles = theme => ({
   pos: {
     marginLeft: 10,
     color: theme.palette.text.secondary
-  },
-  checked: {
-    color: green[500],
-    '& + $bar': {
-      backgroundColor: green[500]
-    }
   },
   textField: {
     marginLeft: theme.spacing.unit,
@@ -69,12 +61,19 @@ const styles = theme => ({
   },
   badge: {
     paddingTop: 12
+  },
+  paper: {
+    padding: theme.spacing.unit
+  },
+  popover: {
+    pointerEvents: 'none'
   }
 })
 
 class FacebookLoginComponent extends Component {
   state = {
-    accountAddress: ''
+    accountAddress: '',
+    anchorEl: null
   }
 
   setIdentity = async () => {
@@ -110,6 +109,14 @@ class FacebookLoginComponent extends Component {
     }
   }
 
+  handleBadgePopoverOpen = event => {
+    this.setState({ anchorEl: event.target })
+  }
+
+  handleBadgePopoverClose = () => {
+    this.setState({ anchorEl: null })
+  }
+
   render () {
     const {
       classes,
@@ -121,38 +128,18 @@ class FacebookLoginComponent extends Component {
       web3detected,
       accountAddress
     } = this.props
-    console.log(web3detected)
     const {
       mappedAddress,
       loadingCheckIdentity,
-      loadingSetIdentity
+      loadingSetIdentity,
+      anchorEl
     } = this.state
+    const open = !!anchorEl
     return (
       <div>
         <Card className={classes.card}>
           <CardContent>
             <Grid container direction='column' spacing={16}>
-              <Grid item xs={12}>
-                {fbId
-                  ? <Grid container direction='row'>
-                    <Avatar
-                      alt={name}
-                      src={photoURL}
-                      className={classNames(
-                          classes.avatar,
-                          classes.bigAvatar
-                        )}
-                      />
-                    <IconButton
-                      className={classes.button}
-                      aria-label='Delete'
-                      onClick={logoutFB}
-                      >
-                      <DeleteIcon />
-                    </IconButton>
-                  </Grid>
-                  : fbLoginButton}
-              </Grid>
               <Grid item xs={12}>
                 <Badge
                   style={{
@@ -161,9 +148,44 @@ class FacebookLoginComponent extends Component {
                   }}
                   badgeContent=''
                   color={web3detected ? 'accent' : 'primary'}
+                  onMouseOver={this.handleBadgePopoverOpen}
+                  onMouseOut={this.handleBadgePopoverClose}
                 >
                   <Web />
                 </Badge>
+                <Popover
+                  className={classes.popover}
+                  classes={{
+                    paper: classes.paper
+                  }}
+                  open={open}
+                  anchorEl={anchorEl}
+                  anchorOrigin={{
+                    vertical: 'bottom',
+                    horizontal: 'left'
+                  }}
+                  transformOrigin={{
+                    vertical: 'top',
+                    horizontal: 'left'
+                  }}
+                  onRequestClose={this.handlePopoverClose}
+                >
+                  <Typography>
+                    {web3detected
+                      ? 'Web3 is detected!'
+                      : 'Web3 is not detected. Please use MetaMask or another tool to inject Web3.'}
+                  </Typography>
+                </Popover>
+              </Grid>
+              <Grid item xs={12}>
+                {fbId
+                  ? <Chip
+                    avatar={<Avatar src={photoURL} />}
+                    label={name}
+                    onRequestDelete={logoutFB}
+                    className={classes.chip}
+                    />
+                  : fbLoginButton}
               </Grid>
               <TextField
                 id='accountAddress'
