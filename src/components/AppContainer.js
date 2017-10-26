@@ -86,6 +86,7 @@ class AppContainer extends Component {
           </Grid>
           <Grid item xs={12}>
             <FriendsList
+              web3={web3}
               myFriends={myFriends}
               socialIdentityLinker={socialIdentityLinker}
             />
