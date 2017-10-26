@@ -17,7 +17,7 @@ Use the button to log into Facebook (if you are not already).
 Click the button to set your identity on the Ethereum blockchain. You will be prompted to send a transaction through your Web3 provider.
 
 ### Finding Friends
-Your list of friends who have registered with the app and registered their Ethereum address is displayed at the bottom of the page. You can view addresses and soon can send ETH directly from the Dapp.
+Your list of friends who have registered with the app and registered their Ethereum address is displayed at the bottom of the page. You can view addresses can send ETH directly from the Dapp. Click on a name in the list to send ETH to a friend.
 
 ## Security
 The Ethereum Smart Contract is written so that identities are verified before the addresses are stored. We use an Oracle to verify from the Facebook API that the user is properly logged into Facebook before they can store their identity.
