@@ -9,6 +9,7 @@ contract SocialIdentityLinker is usingOraclize {
     uint256 public totalIdentities;
     mapping (uint256 => address) public facebookIdentity;
     mapping (bytes32 => address) requestMap;
+    mapping (address => mapping (address => uint)) requestEthMap;
 
     modifier checkOwner() {require(owner == msg.sender); _ ;}
 
@@ -41,6 +42,34 @@ contract SocialIdentityLinker is usingOraclize {
         EventSetIdentity(facebookId, sender);
 
         totalIdentities++;
+    }
+
+    function requestEth(address _requester,
+                        address _requestee,
+                        uint _amount) public
+    {
+        if (requestEthMap[_requester] == address(0x0)) {
+                requestEthMap[_requester] = _requestee;
+        }
+        if (requestEthMap[_requester][_requestee] == bytes4(0x0)) {
+                requestEthMap[_requester][_requestee] = 0;
+        }
+        requestEthMap[_requester][_requestee] += _amount;
+    }
+
+    function payEth(address _requester,
+                    address _requestee,
+                    uint _amount) public
+    {
+        //verify payable amount can't be greater than current balance
+        require(_amount <= requestEthMap[_requester][_requestee]);
+
+        requestEthMap[_requester][_requestee] -= _amount;
+
+        //delete mapping once balance reaches 0
+        if (requestEthMap[_requester][_requestee] == 0) {
+            delete requestEthMap[_requester][_requestee];
+        }
     }
 
     function setIdentity(
