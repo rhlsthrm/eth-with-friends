@@ -1,4 +1,5 @@
 # ETH With Friends
+[![Build Status](https://travis-ci.org/rhlsthrm/eth-with-friends.svg?branch=master)](https://travis-ci.org/rhlsthrm/eth-with-friends)
 
 ## Introduction
 ETH With Friends is a Dapp (decentralized application) that allows you to see which of your friends are using Ethereum and view their registered and verified Ethereum wallet address. This tool provides an easy way for you to send money to your friends without needing them to send you their long and inconvenient Ethereum address!
