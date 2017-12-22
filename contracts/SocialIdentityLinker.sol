@@ -7,9 +7,20 @@ contract SocialIdentityLinker is usingOraclize {
     //state variables
     address public owner;
     uint256 public totalIdentities;
+
+    struct requestStruct {
+        address requestee;
+        uint256 amount;
+    }
+
     mapping (uint256 => address) public facebookIdentity;
     mapping (bytes32 => address) requestMap;
-    mapping (address => mapping (address => uint)) public requestEthMap;
+    
+    //Keeps track of index of individual request
+    mapping (address => uint256) public requestEthIndex;
+
+    //Keeps track of requestee account address and owed amount
+    mapping (address => requestStruct[]) public requestEthStruct;
 
     modifier checkOwner() {require(owner == msg.sender); _ ;}
 
@@ -47,13 +58,28 @@ contract SocialIdentityLinker is usingOraclize {
     function requestEth(address _requestee,
                         uint _amount) public
     {
-        requestEthMap[msg.sender][_requestee] = _amount;
+        //Account index increases by one before pushing struct to request mapping
+        requestEthIndex[msg.sender]++;
+
+        requestStruct s;
+        s.requestee = _requestee;
+        s.amount = _amount;
+
+        requestEthStruct[msg.sender].push(s);
     }
 
-    function payEth(address _requester,
-                    uint _amount) public
+    function payEth(address _requester, 
+                        uint id) public payable
     {
-        requestEthMap[_requester][msg.sender] -= _amount;
+        //Verify sent amount is the owed amount
+        require (msg.value==requestEthStruct[_requester][id].amount);
+        //Verify msg sender is the person who owed money
+        require (msg.sender==requestEthStruct[_requester][id].requestee);
+
+        _requester.transfer(msg.value);
+
+        //Reset owed amount to 0, or should we just delete the entry?
+        requestEthStruct[_requester][id].amount = 0;
     }
 
     function setIdentity(
