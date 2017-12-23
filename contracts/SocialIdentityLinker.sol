@@ -7,9 +7,26 @@ contract SocialIdentityLinker is usingOraclize {
     //state variables
     address public owner;
     uint256 public totalIdentities;
+
+    struct _struct {
+        address _address;
+        uint256 _amount;
+    }
+
     mapping (uint256 => address) public facebookIdentity;
     mapping (bytes32 => address) requestMap;
-    mapping (address => mapping (address => uint)) requestEthMap;
+    
+    //Keeps track of index of individual request
+    mapping (address => uint256) public requestEthIndex;
+
+    //Keeps track of requestee account address and owed amount
+    mapping (address => _struct[]) public requestEthStruct;
+
+    //Keeps track of index of individual request havne't yet to be paid
+    mapping (address => uint256) public payEthIndex;
+
+    //Keeps track of requster account address and owed amount
+    mapping (address => _struct[]) public payEthStruct;
 
     modifier checkOwner() {require(owner == msg.sender); _ ;}
 
@@ -44,32 +61,39 @@ contract SocialIdentityLinker is usingOraclize {
         totalIdentities++;
     }
 
-    function requestEth(address _requester,
-                        address _requestee,
+    function requestEth(address _requestee,
                         uint _amount) public
     {
-        if (requestEthMap[_requester] == address(0x0)) {
-                requestEthMap[_requester] = _requestee;
-        }
-        if (requestEthMap[_requester][_requestee] == bytes4(0x0)) {
-                requestEthMap[_requester][_requestee] = 0;
-        }
-        requestEthMap[_requester][_requestee] += _amount;
+
+        _struct s;
+        s._address = _requestee;
+        s._amount = _amount;
+
+        requestEthStruct[msg.sender].push(s);
+
+        s._address = msg.sender;
+        payEthStruct[_requestee].push(s);
+
+        //Increase both indexes by one
+        requestEthIndex[msg.sender]++;
+        payEthIndex[_requestee]++;
     }
 
-    function payEth(address _requester,
-                    address _requestee,
-                    uint _amount) public
+    function payEth(uint id) 
+    public payable 
     {
-        //verify payable amount can't be greater than current balance
-        require(_amount <= requestEthMap[_requester][_requestee]);
+        address payTo = payEthStruct[msg.sender][id]._address;
+        //Verify transaction amount is whole
+        require (payEthStruct[msg.sender][id]._amount==msg.value);
+        //Verify transaction sender is correct
+        require (requestEthStruct[payTo][id]._address==msg.sender);
 
-        requestEthMap[_requester][_requestee] -= _amount;
 
-        //delete mapping once balance reaches 0
-        if (requestEthMap[_requester][_requestee] == 0) {
-            delete requestEthMap[_requester][_requestee];
-        }
+        payTo.transfer(msg.value);
+
+        //Reset amount to 0
+        requestEthStruct[payTo][id]._amount = 0;
+        payEthStruct[msg.sender][id]._amount = 0;
     }
 
     function setIdentity(
