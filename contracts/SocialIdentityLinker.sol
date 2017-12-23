@@ -8,9 +8,9 @@ contract SocialIdentityLinker is usingOraclize {
     address public owner;
     uint256 public totalIdentities;
 
-    struct requestStruct {
-        address requestee;
-        uint256 amount;
+    struct _struct {
+        address _address;
+        uint256 _amount;
     }
 
     mapping (uint256 => address) public facebookIdentity;
@@ -20,7 +20,13 @@ contract SocialIdentityLinker is usingOraclize {
     mapping (address => uint256) public requestEthIndex;
 
     //Keeps track of requestee account address and owed amount
-    mapping (address => requestStruct[]) public requestEthStruct;
+    mapping (address => _struct[]) public requestEthStruct;
+
+    //Keeps track of index of individual request havne't yet to be paid
+    mapping (address => uint256) public payEthIndex;
+
+    //Keeps track of requster account address and owed amount
+    mapping (address => _struct[]) public payEthStruct;
 
     modifier checkOwner() {require(owner == msg.sender); _ ;}
 
@@ -58,28 +64,36 @@ contract SocialIdentityLinker is usingOraclize {
     function requestEth(address _requestee,
                         uint _amount) public
     {
-        //Account index increases by one before pushing struct to request mapping
-        requestEthIndex[msg.sender]++;
 
-        requestStruct s;
-        s.requestee = _requestee;
-        s.amount = _amount;
+        _struct s;
+        s._address = _requestee;
+        s._amount = _amount;
 
         requestEthStruct[msg.sender].push(s);
+
+        s._address = msg.sender;
+        payEthStruct[_requestee].push(s);
+
+        //Increase both indexes by one
+        requestEthIndex[msg.sender]++;
+        payEthIndex[_requestee]++;
     }
 
-    function payEth(address _requester, 
-                        uint id) public payable
+    function payEth(uint id) 
+    public payable 
     {
-        //Verify sent amount is the owed amount
-        require (msg.value==requestEthStruct[_requester][id].amount);
-        //Verify msg sender is the person who owed money
-        require (msg.sender==requestEthStruct[_requester][id].requestee);
+        address payTo = payEthStruct[msg.sender][id]._address;
+        //Verify transaction amount is whole
+        require (payEthStruct[msg.sender][id]._amount==msg.value);
+        //Verify transaction sender is correct
+        require (requestEthStruct[payTo][id]._address==msg.sender);
 
-        _requester.transfer(msg.value);
 
-        //Reset owed amount to 0, or should we just delete the entry?
-        requestEthStruct[_requester][id].amount = 0;
+        payTo.transfer(msg.value);
+
+        //Reset amount to 0
+        requestEthStruct[payTo][id]._amount = 0;
+        payEthStruct[msg.sender][id]._amount = 0;
     }
 
     function setIdentity(
