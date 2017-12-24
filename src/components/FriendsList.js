@@ -49,9 +49,12 @@ class FriendsList extends Component {
     friendsWithAddress: [],
     openDialog: false,
     sendAmount: 0,
+    requestAmount: 0,
     selectedFriend: {},
     sendAmountError: false,
-    sendEthStatus: 'none'
+    requestAmountError: false,
+    sendEthStatus: 'none',
+    requestEthStatus: 'none'
   }
 
   async componentWillReceiveProps (nextProps) {
@@ -97,6 +100,13 @@ class FriendsList extends Component {
     })
   }
 
+  handleRequestAmountChange = event => {
+    this.setState({
+      requestAmountError: parseFloat(event.target.value) < 0,
+      requestAmount: event.target.value
+    })
+  }  
+
   handleSendEth = () => {
     const { web3 } = this.props
     const { selectedFriend, sendAmountError, sendAmount } = this.state
@@ -123,6 +133,20 @@ class FriendsList extends Component {
           }
         }
       )
+    }
+  }
+
+  async handleRequestEth(requestAmount) {
+    const { socialIdentityLinker } = this.props
+    const inst = await socialIdentityLinker.deployed()
+    this.setState({requestEthStatus: 'requesting'})
+    try {
+      await inst.requestEth(selectedFriend.address, requestAmount)
+    } catch (e) {
+      this.setState({ requestAmountError: 'error', })
+      console.log(e)
+    } finally {
+      this.setState({ requestEthStatus: 'requested', })
     }
   }
 
