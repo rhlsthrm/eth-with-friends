@@ -39,6 +39,7 @@ contract SocialIdentityLinker is usingOraclize {
     //constructor
     function SocialIdentityLinker() public {
         owner = msg.sender;
+        OAR = OraclizeAddrResolverI(0x6f485C8BF6fc43eA212E93BBF8ce046C7f1cb475);
         totalIdentities = 0;
         Hello("Hello, World!");
     }
