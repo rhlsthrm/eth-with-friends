@@ -47,11 +47,16 @@ const styles = theme => ({
 class FriendsList extends Component {
   state = {
     friendsWithAddress: [],
-    openDialog: false,
+    openSendDialog: false,
+    openRequestDialog: false,
     sendAmount: 0,
+    requestAmount: 0,
     selectedFriend: {},
     sendAmountError: false,
-    sendEthStatus: 'none'
+    requestAmountError: false,
+    sendEthStatus: 'none',
+    requestEthStatus: 'none',
+    descriptions:"",
   }
 
   async componentWillReceiveProps (nextProps) {
@@ -76,17 +81,26 @@ class FriendsList extends Component {
     }
   }
 
-  handleListItemClick = friend => () => {
-    this.setState({ openDialog: true, selectedFriend: friend })
+  handleListItemClickSend = friend => () => {
+    this.setState({ openSendDialog: true, selectedFriend: friend })
+  }
+
+  handleListItemClickRequest = friend => () => {
+    this.setState({ openRequestDialog: true, selectedFriend: friend })
   }
 
   handleDialogClose = () => {
     this.setState({
-      openDialog: false,
+      openSendDialog: false,
+      openRequestDialog: false,
       sendEthStatus: 'none',
       sendEthErrorBool: false,
       sendEthErrorObj: {},
-      sentTxHash: ''
+      requestEthStatus: 'none',
+      requestEthErrorBool: false,
+      requestEthErrorObj: {},      
+      sentTxHash: '',
+      requestTxHash:''
     })
   }
 
@@ -96,6 +110,19 @@ class FriendsList extends Component {
       sendAmount: event.target.value
     })
   }
+
+  handleRequestAmountChange = event => {
+    this.setState({
+      requestAmountError: parseFloat(event.target.value) < 0,
+      requestAmount: event.target.value
+    })
+  }
+
+  handleDescriptionChange = event => {
+    this.setState({
+      descriptions: event.target.value
+    })
+  }  
 
   handleSendEth = () => {
     const { web3 } = this.props
@@ -126,18 +153,42 @@ class FriendsList extends Component {
     }
   }
 
+  handleRequestEth = async () => {
+    const { socialIdentityLinker, web3 } = this.props
+    const { selectedFriend, requestAmountError, requestAmount, descriptions } = this.state
+    const inst = await socialIdentityLinker.deployed()
+    let tx = ""
+    this.setState({requestEthStatus: 'requesting'})
+    try {
+      tx = await inst.requestEth(selectedFriend.address, web3.toWei(requestAmount, "ether"), descriptions )
+    } catch (e) {
+      this.setState({ requestAmountError: 'error', })
+      console.log(e)
+    } finally {
+      this.setState({ requestEthStatus: 'requested', requestTxHash: tx })
+    }
+  }
+
   render () {
     const { classes } = this.props
     const {
       friendsWithAddress,
-      openDialog,
+      openSendDialog,
+      openRequestDialog,
       selectedFriend,
       sendAmount,
+      requestAmount,
       sendAmountError,
+      requestAmountError,
       sendEthStatus,
+      requestEthStatus,
       sentTxHash,
+      requestTxHash,
       sendEthErrorBool,
-      sendEthErrorObj
+      sendEthErrorObj,
+      requestEthErrorBool,
+      requestEthErrorObj,
+      descriptions      
     } = this.state
 
     return (
@@ -152,13 +203,22 @@ class FriendsList extends Component {
                 <ListItem
                   button
                   key={`friendlist-${index}`}
-                  onClick={this.handleListItemClick(friend)}
                   >
                   <Avatar alt={friend.name} src={friend.picture.data.url} />
                   <ListItemText
                     primary={friend.name}
                     secondary={friend.address}
                     />
+                    <Button raised color="primary" 
+                            className={classes.button}
+                            onClick={this.handleListItemClickSend(friend)}>
+                      Send
+                    </Button>
+                    <Button raised color="accent" 
+                            className={classes.button}
+                            onClick={this.handleListItemClickRequest(friend)}>
+                      Request
+                    </Button>                    
                 </ListItem>
               )
             })
@@ -169,7 +229,7 @@ class FriendsList extends Component {
         {
           {
             none: (
-              <Dialog open={openDialog} onRequestClose={this.handleDialogClose}>
+              <Dialog open={openSendDialog} onRequestClose={this.handleDialogClose}>
                 <DialogTitle>Send ETH to {selectedFriend.name}</DialogTitle>
                 <DialogContent>
                   <DialogContentText>
@@ -212,7 +272,7 @@ class FriendsList extends Component {
             ),
             sending: (
               <Dialog
-                open={openDialog}
+                open={openSendDialog}
                 onRequestClose={this.handleDialogClose}
                 ignoreBackdropClick
                 ignoreEscapeKeyUp
@@ -224,7 +284,7 @@ class FriendsList extends Component {
               </Dialog>
             ),
             sent: (
-              <Dialog open={openDialog} onRequestClose={this.handleDialogClose}>
+              <Dialog open={openSendDialog} onRequestClose={this.handleDialogClose}>
                 <DialogTitle>
                   {sendEthErrorBool
                     ? 'Error Sending ETH'
@@ -252,6 +312,104 @@ class FriendsList extends Component {
             )
           }[sendEthStatus]
         }
+
+        {
+          {
+            none: (
+              <Dialog open={openRequestDialog} onRequestClose={this.handleDialogClose}>
+                <DialogTitle>Request ETH to {selectedFriend.name}</DialogTitle>
+                <DialogContent>
+                  <DialogContentText>
+                    Wallet Address: {selectedFriend.address}
+                  </DialogContentText>
+                  <FormControl
+                    className={classes.formControl}
+                    error={requestAmountError}
+                  >
+                    <InputLabel htmlFor='requestAmount'>Amount</InputLabel>
+                    <Input
+                      id='requestAmount'
+                      value={requestAmount}
+                      onChange={this.handleRequestAmountChange}
+                      endAdornment={
+                        <InputAdornment position='end'>ETH</InputAdornment>
+                      }
+                      type='number'
+                    />
+                    <FormHelperText>
+                      {sendAmountError
+                        ? 'Please specify a valid amount of ETH to request.'
+                        : 'Specify amount of ETH to request.'}
+                    </FormHelperText>
+                  </FormControl>
+                  <FormControl
+                  className={classes.formControl}
+                  >
+                  <InputLabel htmlFor='descriptions'>Description</InputLabel>
+                  <Input
+                    id='descriptions'
+                    value={descriptions}
+                    onChange={this.handleDescriptionChange}
+                    type='text'
+                  />
+                </FormControl>                  
+                </DialogContent>
+                <DialogActions>
+                  <Button onClick={this.handleDialogClose} color='accent'>
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={this.handleRequestEth}
+                    color='accent'
+                    disabled={requestAmountError}
+                  >
+                    Request
+                  </Button>
+                </DialogActions>
+              </Dialog>
+            ),
+            requesting: (
+              <Dialog
+                open={openRequestDialog}
+                onRequestClose={this.handleDialogClose}
+                ignoreBackdropClick
+                ignoreEscapeKeyUp
+              >
+                <DialogTitle>Requesting in progress...</DialogTitle>
+                <DialogContent>
+                  <LinearProgress color='accent' />
+                </DialogContent>
+              </Dialog>
+            ),
+            requested: (
+              <Dialog open={openSendDialog} onRequestClose={this.handleDialogClose}>
+                <DialogTitle>
+                  {requestEthErrorBool
+                    ? 'Error Requesting ETH'
+                    : 'ETH requested successfully!'}
+                </DialogTitle>
+                <DialogContent>
+                  {requestEthErrorBool
+                    ? <DialogContentText>
+                      {requestEthErrorObj.toString()}
+                    </DialogContentText>
+                    : <DialogContentText>
+                        Tx hash:
+                        {' '}
+                      <a href={`https://kovan.etherscan.io/tx/{requestTxHash}`}>
+                        {requestTxHash}
+                      </a>
+                    </DialogContentText>}
+                </DialogContent>
+                <DialogActions>
+                  <Button onClick={this.handleDialogClose} color='default'>
+                    Done
+                  </Button>
+                </DialogActions>
+              </Dialog>
+            )
+          }[requestEthStatus]
+        }        
       </Paper>
     )
   }

@@ -11,6 +11,7 @@ contract SocialIdentityLinker is usingOraclize {
     struct _struct {
         address _address;
         uint256 _amount;
+        string _description;
     }
 
     mapping (uint256 => address) public facebookIdentity;
@@ -38,6 +39,7 @@ contract SocialIdentityLinker is usingOraclize {
     //constructor
     function SocialIdentityLinker() public {
         owner = msg.sender;
+        OAR = OraclizeAddrResolverI(0x6f485C8BF6fc43eA212E93BBF8ce046C7f1cb475);
         totalIdentities = 0;
         Hello("Hello, World!");
     }
@@ -62,12 +64,14 @@ contract SocialIdentityLinker is usingOraclize {
     }
 
     function requestEth(address _requestee,
-                        uint _amount) public
+                        uint _amount,
+                        string _description) public
     {
 
         _struct s;
         s._address = _requestee;
         s._amount = _amount;
+        s._description = _description;
 
         requestEthStruct[msg.sender].push(s);
 
